@@ -1,0 +1,492 @@
+{
+  "name": "Hackathon",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "id": "8406ec14-3f3b-4276-b34e-e273e211a646",
+      "name": "Incoming Email Monitor",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "position": [
+        60,
+        240
+      ],
+      "notesInFlow": false,
+      "typeVersion": 1.2,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "lxmOYkypIYTloKTx",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-preview-04-17",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        280,
+        1080
+      ],
+      "id": "798404d7-6447-46a3-b492-bdac74a3f820",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Sq9WkNTG0FkHv65F",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jiraVersion": "server",
+        "resource": "issueComment",
+        "issueKey": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Issue_Key', ``, 'string') }}",
+        "comment": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Comment', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.jiraTool",
+      "typeVersion": 1,
+      "position": [
+        400,
+        1080
+      ],
+      "id": "bed2b18c-90f0-47ec-b1e4-77fd5c086182",
+      "name": "Jira Software",
+      "credentials": {
+        "jiraSoftwareServerApi": {
+          "id": "pS9ZCASdstB9AeWH",
+          "name": "Jira SW Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Hi there! 👋\nHow can I help you?",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        60,
+        860
+      ],
+      "id": "15a39571-00c1-46e2-b4a4-2a7be4829158",
+      "name": "When chat message received",
+      "webhookId": "4e78acfd-e31d-4426-8534-2b68d4c09388"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput ? 'CHAT: '+$json.chatInput : 'Mail: ' + $json.Subject}}",
+        "options": {
+          "systemMessage": "You are a helpful assistantCore Identity\nYou are a professional and friendly virtual secretary, dedicated to sending reminders based on incoming emails and responding to user queries from chat prompts with a warm personal touch.\n\nCommunication Style\nCommunicate in a conversational, approachable manner.\n\nMaintain a balance between professional competence and friendly rapport.\n\nUse a tone that is informal yet precise.\n\nInject occasional light humor and personality into interactions.\n\n\nInteraction Guidelines\nUse a friendly, conversational tone.\n\nJust describe the details of the event without asking questions.\n\nTone and Language\nWarm and approachable.\n\nProfessional but not overly formal.\n\nDirect and clear in communication.\n\nUse simple, straightforward language.\n\nShow genuine care and attentiveness.\n\nInstructions\nInput Identification:\n\nIf the input is from chat, it will have \"CHAT: \" followed by the user input message.\n\nIf the input is from email, it will have \"Mail: \" followed by the email content.\n\nIdentify Jira-related queries:\n\nIf the user input from chat explicitly mentions Jira, a Jira ticket, a sprint, or any terms strongly associated with Jira project management, classify the query as \"Jira-related\". In such cases, your primary action is to redirect the query to the appropriate Jira workflow.\n\nIf the query is related to getting status or any metadata related to JIRA:\n\nCall get_jira_workflow to retrieve the corresponding information.\n\nSend the output response as a chat message with the Jira workflow response.\n\nIf the query is related to adding a comment to a specific JIRA:\n\nCall update_jira_comment_workflow to add the mentioned comment to the corresponding Jira issue.\n\nSend a notification message to chat on comment update status.\n\nProcess Email Input:\nIf the input originates from an email:\n\nSummarize email content: Extract the main points, topics, and any action items from the email content. Provide a concise summary of the email.\n\nDetermine if a response is needed: Based on the email content and your summary, determine if a direct response is likely required from the user. Consider factors such as questions asked, requests made, or actions needed.\n\nSend Telegram alert (if response needed): If you determine that a response is needed, send a Telegram alert to the user. The alert message should include a brief summary of the email and clearly state that a response is required. For example: \"New email received requiring your response: [Brief Summary of Email]. Please check your inbox.\"\n\nHandle Other Input:\n\nFor any input that is not classified as Jira-related and does not originate from an email, provide a general acknowledgment and indicate that the query will be processed according to professional response. For example: \"Thank you for your input. We will get back to you shortly with an appropriate response.\"\n\nAnalyze Email for Cab Receipts:\nWhen a new email arrives, analyze the subject and sender:\n\nIf either contains any of the following:\n\nWords: \"Uber\", \"Ola\", \"Rapido\", \"cab\", \"ride receipt\", \"trip summary\", \"ride invoice\"\n\nDomains: \"@uber.com\", \"@olacabs.com\", \"@rapido.bike\"\n\nThen:\n\nPass the email content ({{ $json.Subject }}, {{ $json.payload }}, attachments) to the \"Cab Receipts Forwarder\" workflow.\n\nIgnore promotional or unrelated emails.\n\nConstraints:\nFocus on accurately classifying the input and triggering the appropriate action.\n\nKeep summaries concise and informative.\n\nEnsure Telegram alerts are clear and actionable.\n\nDo not perform the Jira redirection or send the Telegram message directly. Your role is to generate the instructions for n8n to perform these actions based on your analysis.\n\nFinal Goal\nYour primary goal is to make the user's life easier, more organized, and less stressful through efficient and friendly administrative support."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        560,
+        580
+      ],
+      "id": "69905f10-29a9-4cfb-9611-d9b4b5ab9903",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "jiraVersion": "server",
+        "operation": "get",
+        "issueKey": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Issue_Key', ``, 'string') }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.jiraTool",
+      "typeVersion": 1,
+      "position": [
+        520,
+        1080
+      ],
+      "id": "38dadbda-80b2-4352-8a6a-43d3724a2fef",
+      "name": "Jira Software2",
+      "credentials": {
+        "jiraSoftwareServerApi": {
+          "id": "pS9ZCASdstB9AeWH",
+          "name": "Jira SW Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Gmail3').item.json.To }}",
+        "subject": "={{ $('Gmail3').item.json.Subject }}",
+        "message": "Hello",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        940,
+        580
+      ],
+      "id": "f567288b-3e33-45e5-8585-db58c0eba18b",
+      "name": "Gmail4",
+      "webhookId": "e4a66720-675b-409a-9766-6a3acd867b62",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "lxmOYkypIYTloKTx",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "088f1a42-b5ee-4e5a-90ae-b6727a31fcb1",
+              "leftValue": "={{ $json.subject }}",
+              "rightValue": "Rapido",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "a61c63e9-0342-4200-9ac8-ec4684fbcea5",
+              "leftValue": "={{ $json.subject }}",
+              "rightValue": "Uber",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "ignoreCase": false
+        }
+      },
+      "id": "fd913afa-f4f9-4690-aa01-674ac3ea5d8f",
+      "name": "Email Validation Check",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        500,
+        -20
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "sendTo": "receipts@expensify.com",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.messageId}}\n",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "={{ $json.attachments.join(',') }}"
+              }
+            ]
+          },
+          "ccList": "harshitha.uk@thoughtworks.com",
+          "senderName": "Harshitha U K"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        940,
+        -20
+      ],
+      "id": "4c97cfc4-3c2c-4de2-85d8-1ccf8e9d2902",
+      "name": "Gmail",
+      "webhookId": "0f3a9b26-3fcb-4048-81b9-45b132e513f0",
+      "notesInFlow": false,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "lxmOYkypIYTloKTx",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const binaryKeys = Object.keys(item.binary || {});\n\n  return {\n    json: {\n      ...item.json,              // keeps original fields like to, from, subject, etc.\n      attachments: binaryKeys    // add attachment key list\n    },\n    binary: item.binary          // keep all binaries\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        -20
+      ],
+      "id": "fe2ded23-6e3f-4b3b-8357-6ae71f949b37",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "id": "408e3c42-09ff-4578-b0a5-da6108f4d4c2",
+      "name": "Incoming Email Monitor1",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "position": [
+        60,
+        -20
+      ],
+      "notesInFlow": false,
+      "typeVersion": 1.2,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "lxmOYkypIYTloKTx",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 1,
+        "simple": false,
+        "filters": {},
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        280,
+        -20
+      ],
+      "id": "796c2d56-5043-486b-b937-18d903d9d042",
+      "name": "Gmail5",
+      "webhookId": "e8fc9386-981f-4e60-bc13-3bbe5f83572c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "lxmOYkypIYTloKTx",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 1,
+        "simple": false,
+        "filters": {},
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        280,
+        240
+      ],
+      "id": "95c290a8-7ee7-445b-8c0a-ab513ec04594",
+      "name": "Gmail1",
+      "webhookId": "e8fc9386-981f-4e60-bc13-3bbe5f83572c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "lxmOYkypIYTloKTx",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        500,
+        240
+      ],
+      "id": "2cf8f453-5447-4c8a-8805-d34b72c686ed",
+      "name": "Gmail3",
+      "webhookId": "9cc69645-1cad-4552-ad87-697c91e7c501",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "lxmOYkypIYTloKTx",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Incoming Email Monitor": {
+      "main": [
+        [
+          {
+            "node": "Gmail1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jira Software": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jira Software2": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Gmail4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Validation Check": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Incoming Email Monitor1": {
+      "main": [
+        [
+          {
+            "node": "Gmail5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail5": {
+      "main": [
+        [
+          {
+            "node": "Email Validation Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail1": {
+      "main": [
+        [
+          {
+            "node": "Gmail3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail3": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a28fe786-306d-498c-91a6-c9fe6d60584f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d1f6dc63107b8e882ca2bac5e1a845307d5eff349d9689f5397fdb37b0d64dc0"
+  },
+  "id": "GT0xYQkp7KpO97x9",
+  "tags": []
+}
