@@ -1,0 +1,309 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "088f1a42-b5ee-4e5a-90ae-b6727a31fcb1",
+              "leftValue": "={{ $json.subject }}",
+              "rightValue": "Rapido",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "a61c63e9-0342-4200-9ac8-ec4684fbcea5",
+              "leftValue": "={{ $json.subject }}",
+              "rightValue": "Uber",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "ignoreCase": false
+        }
+      },
+      "id": "c61ec06c-d1d0-4dc9-ac72-f80b19701aa6",
+      "name": "Email Validation Check",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1880,
+        840
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "chatId": "1116301715",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "id": "dc896a03-ce76-4601-922c-055f9b4eec79",
+      "name": "Send Telegram Message",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        2360,
+        1220
+      ],
+      "webhookId": "c8f1d16f-b698-4af9-a795-9aaa277c2bf6",
+      "notesInFlow": false,
+      "typeVersion": 1.2,
+      "credentials": {
+        "telegramApi": {
+          "id": "bs3Ed0o0v12hNSUF",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "receipts@expensify.com",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.messageId}}\n",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "={{ $json.attachments.join(',') }}"
+              }
+            ]
+          },
+          "ccList": "harshitha.uk@thoughtworks.com",
+          "senderName": "Harshitha U K"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2400,
+        840
+      ],
+      "id": "382121a4-deb5-4b1a-89d3-c2cdd8823d7f",
+      "name": "Gmail",
+      "webhookId": "0f3a9b26-3fcb-4048-81b9-45b132e513f0",
+      "notesInFlow": false,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "S2qhBFx0NE1xEotH",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $json.id }}",
+        "simple": false,
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1640,
+        840
+      ],
+      "id": "4568389a-7974-4c11-9e78-40d32f7812b2",
+      "name": "Gmail2",
+      "webhookId": "8ba55124-672f-460e-85fe-308ce9974c43",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "S2qhBFx0NE1xEotH",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const binaryKeys = Object.keys(item.binary || {});\n\n  return {\n    json: {\n      ...item.json,              // keeps original fields like to, from, subject, etc.\n      attachments: binaryKeys    // add attachment key list\n    },\n    binary: item.binary          // keep all binaries\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2140,
+        820
+      ],
+      "id": "5daffc5f-421a-4730-9c1c-b4d7495d5fd8",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "id": "2ebfdc7d-0f19-4212-9db0-d85e501ec7be",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        1320,
+        840
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "S2qhBFx0NE1xEotH",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "e6de35b3-eed8-4f62-b312-f0a1b5363e29",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        2600,
+        940
+      ],
+      "webhookId": "e0c0437a-7b39-43e7-bfd3-73ea886b3466"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-pro-exp-02-05",
+        "options": {}
+      },
+      "id": "97e8c73f-6ac0-4ffb-8ea8-9b848295a259",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1920,
+        1260
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "dSbtFP36UzfDh6A9",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "agent": "reActAgent",
+        "promptType": "define",
+        "text": "=If the subject of the email contains the word \"Urgent\" or \"Important\", send a notification to Telegram with the following information:\n\n*   Subject of the email\n*   Sender's email address\n*   Summary of the email content",
+        "options": {}
+      },
+      "id": "15f64b4f-7114-42ce-ace2-367a32d962c5",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        1900,
+        1080
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Email Validation Check": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail2": {
+      "main": [
+        [
+          {
+            "node": "Email Validation Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Gmail2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "197d960a-0e0e-4c8c-b022-41ef431156f2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "687b5d4983362bee56278e4ed545eceb4171b28091a3e0986b5cebb637fb45a3"
+  },
+  "id": "KfUy96pojnifjewc",
+  "tags": []
+}
